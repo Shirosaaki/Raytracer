@@ -1,0 +1,81 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 134,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "bin",
+			"paths" : 
+			[
+				"/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/raytracer"
+			],
+			"targetId" : "raytracer::@6890427a1f51a3e7e1df",
+			"targetIndex" : 3,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/plugins/primitiveManager.so"
+			],
+			"targetId" : "primitives::@6890427a1f51a3e7e1df",
+			"targetIndex" : 2,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/plugins/sphere.so"
+			],
+			"targetId" : "sphere::@6890427a1f51a3e7e1df",
+			"targetIndex" : 4,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/plugins/plane.so"
+			],
+			"targetId" : "plane::@6890427a1f51a3e7e1df",
+			"targetIndex" : 1,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	}
+}

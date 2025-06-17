@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raytracer Documentation</title>
+    <link rel="stylesheet" href="doc.css">
+    <link rel="icon" type="image/x-icon" href="example1.png">
+</head>
+<body>
+    <header>
+        <h1>Raytracer Project Documentation</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#build">Building the Project</a></li>
+            <li><a href="#usage">Usage</a></li>
+            <li><a href="#classes">Core Classes</a></li>
+            <li><a href="#design-patterns">Design Patterns</a></li>
+            <li><a href="#libraries">Shared Libraries</a></li>
+            <li><a href="#tools">Tools & Utilities</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="overview">
+            <h2>Project Overview</h2>
+            <p>
+                The Raytracer project is a physically-based rendering system that simulates the behavior of light to generate photorealistic images.
+                It traces the path of light from the camera through each pixel of an image plane into a 3D scene, calculating interactions with various primitives.
+            </p>
+        </section>
+
+        <section id="architecture">
+            <h2>Architecture</h2>
+            <p>
+                The project uses a modular architecture with core components and dynamic libraries:
+            </p>
+            <ul>
+                <li><strong>Core Components</strong>: Ray, Camera, Vector math</li>
+                <li><strong>Primitives</strong>: Objects that can be rendered (Spheres, Planes, etc.)</li>
+                <li><strong>Lights</strong>: Different light sources for scene illumination</li>
+                <li><strong>Renderers</strong>: Various rendering algorithms</li>
+                <li><strong>Effects</strong>: Optical effects like reflection, refraction</li>
+            </ul>
+            <div class="diagram">
+                <img src="archi.png" alt="Architecture diagram">
+            </div>
+            <pre><code>
+.
+├── CMakeLists.txt
+├── config.cfg
+├── doc
+│   ├── archi.png
+│   ├── doc.css
+│   ├── doc.html
+│   ├── example1.png
+│   ├── example2.png
+│   └── example3.png
+├── plugins
+│   ├ Contains the shared libraries for different renderers and effects
+└── src
+    ├── Builder
+    │   ├── Builder.cpp
+    │   └── Builder.hpp
+    ├── Camera.cpp
+    ├── Camera.hpp
+    ├── CoreRenderers
+    ├── Graphical
+    ├── Lights
+    ├── main.cpp
+    ├── Materials
+    │   ├── Flat.hpp
+    │   ├── IMaterials.hpp
+    │   └── Metal.hpp
+    ├── OpticalEffects
+    ├── Primitives
+    │   ├── Cube
+    │   │   ├── Cube.cpp
+    │   │   └── Cube.hpp
+    │   ├── IPrimitive.hpp
+    │   ├── Plane
+    │   │   ├── Plane.cpp
+    │   │   └── Plane.hpp
+    │   ├── PrimitiveList.hpp
+    │   ├── PrimitiveManager.cpp
+    │   ├── PrimitiveManager.hpp
+    │   ├── Sphere
+    │   │   ├── Sphere.cpp
+    │   │   └── Sphere.hpp
+    │   ├── Vector3D.cpp
+    │   └── Vector3D.hpp
+    ├── Ray.cpp
+    ├── Ray.hpp
+    ├── SceneLoaders
+    └── tools
+        ├── dlManager.cpp
+        ├── dlManager.hpp
+        ├── Error.cpp
+        └── Error.hpp
+            </code></pre>
+        </section>
+
+        <section id="build">
+            <h2>Building the Project</h2>
+            <p>The project uses CMake for building. Follow these steps:</p>
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>C++ compiler with C++17 support</li>
+                <li>CMake 3.10 or higher</li>
+            </ul>
+            <h3>Build Commands</h3>
+            <pre><code>mkdir -p build
+cd build
+cmake ..
+make</code></pre>
+            
+            <p>This will generate the raytracer executable in the build directory.</p>
+        </section>
+        
+        <section id="usage">
+            <h2>Usage</h2>
+            <h3>Running the Raytracer</h3>
+            <pre><code>./raytracer [scene_file.cfg]</code></pre>
+            <p>Where scene_file.cfg contains the description of the scene to render.</p>
+        </section>
+
+        <section id="examples">
+            <h2>Examples</h2>
+            <img src="example1.png" alt="Example 1">
+            <img src="example2.png" alt="Example 2">
+            <img src="example3.png" alt="Example 3">
+        </section>
+
+        <section id="classes">
+            <h2>Core Classes</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Camera</h3>
+                    <p>Defines the viewpoint and projection for rendering the scene.</p>
+                </div>
+                <div class="card">
+                    <h3>Ray</h3>
+                    <p>Represents light rays that are traced through the scene.</p>
+                </div>
+                <div class="card">
+                    <h3>Vector3D</h3>
+                    <p>Mathematical representations for positions and directions in 3D space.</p>
+                </div>
+                <div class="card">
+                    <h3>Primitives</h3>
+                    <p>Objects that can be rendered (Spheres, Planes, etc.)</p>
+                </div>
+                <div class="card">
+                    <h3>PrimitiveManager</h3>
+                    <p>Manages collections of primitives in the scene.</p>
+                </div>
+                <div class="card">
+                    <h3>HitRecord</h3>
+                    <p>Records information about ray intersections with primitives.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="design-patterns">
+            <h2>Design Patterns</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Builder</h3>
+                    <p>Used to construct all the project components. Primitives, lights, scene loader...</p>
+                </div>
+                <div class="card">
+                    <h3>Factory Method</h3>
+                    <p>Used by PrimitiveManager to instantiate primitives based on a simple type name.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="libraries">
+            <h2>Shared Libraries</h2>
+            <p>The raytracer uses shared libraries for:</p>
+            <ul>
+                <li><strong>Modularity</strong>: Components can be developed and tested independently</li>
+                <li><strong>Dynamic Loading</strong>: Different renderers and effects can be loaded at runtime</li>
+                <li><strong>Extensibility</strong>: New primitives, lights, and effects can be added without recompiling the core</li>
+                <li><strong>Resource Efficiency</strong>: Only necessary components are loaded into memory</li>
+            </ul>
+            <p>The dlManager utility provides infrastructure for loading and managing these libraries.</p>
+        </section>
+        
+        <section id="tools">
+            <h2>Tools & Utilities</h2>
+            <div class="card-container">
+                <div class="card">
+                    <h3>Error</h3>
+                    <p>Sophisticated error handling system for debugging and error reporting.</p>
+                </div>
+                <div class="card">
+                    <h3>dlManager</h3>
+                    <p>Dynamic library loading and management utility.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>Raytracer Project Documentation - 2023</p>
+    </footer>
+</body>
+</html>

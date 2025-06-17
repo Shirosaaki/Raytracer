@@ -1,0 +1,11 @@
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/primitives.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/sphere.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/plane.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/cube.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/raytracer.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/edit_cache.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/rebuild_cache.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/list_install_components.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/install.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/install/local.dir
+/home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/build/CMakeFiles/install/strip.dir
