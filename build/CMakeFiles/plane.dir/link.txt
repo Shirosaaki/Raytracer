@@ -1,1 +1,0 @@
-/usr/bin/g++ -fPIC -g -shared -Wl,-soname,plane.so -o /home/matheocampanella/DELIV/S4/oop/B-OOP-400-NCE-4-1-raytracer-matheo.campanella/plugins/plane.so CMakeFiles/plane.dir/src/Primitives/Vector3D.cpp.o CMakeFiles/plane.dir/src/Primitives/Plane/Plane.cpp.o 
