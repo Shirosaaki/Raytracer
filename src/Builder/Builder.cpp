@@ -17,6 +17,9 @@
 #include <random>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
+#include <thread>
+#include <vector>
+#include <mutex>
 
 Builder::Builder(std::string nameFile)
     : root(nullptr), primitives(nullptr), lights(nullptr), camera(nullptr)
@@ -48,13 +51,18 @@ Builder::~Builder()
 
 void Builder::loadPrimitives()
 {
-    auto manager = new tools::DLManager("plugins/primitiveManager.so");
-    if (!manager->getLibrary())
-        throw tools::Error(tools::Error::ErrorType::DL_ERROR_INVALID_LIBRARY);
-    auto createPrimitiveManager = (primitives::PrimitiveManager *(*)())manager->getFunction("createPrimitiveManager");
-    if (!createPrimitiveManager)
-        throw tools::Error(tools::Error::ErrorType::DL_ERROR_INVALID_FUNCTION);
-    primitives::PrimitiveManager *primitiveManager = createPrimitiveManager();
+    // Try to load the plugin manager, but don't fail if it's missing
+    primitives::PrimitiveManager *primitiveManager = nullptr;
+    
+    try {
+        auto manager = new tools::DLManager("plugins/primitiveManager.so");
+        auto createPrimitiveManager = (primitives::PrimitiveManager *(*)())manager->getFunction("createPrimitiveManager");
+        if (createPrimitiveManager)
+            primitiveManager = createPrimitiveManager();
+    } catch (const tools::Error &e) {
+        // Plugin manager not available - continue without it
+        // Errors will be thrown only when a primitive actually tries to use it
+    }
     
     for (int i = 0; i < primitives->getLength(); ++i) {
         const libconfig::Setting &primitiveList = (*primitives)[i];
@@ -112,6 +120,11 @@ void Builder::loadPrimitives()
                 double r255 = r / 255.0;
                 double g255 = g / 255.0;
                 double b255 = b / 255.0;
+                
+                if (!primitiveManager) {
+                    std::cerr << "Erreur: Plugin manager not loaded, cannot create Sphere primitive" << std::endl;
+                    continue;
+                }
                 primitives::IPrimitive *sphere = primitiveManager->createPrimitive("Sphere");
                 if (!sphere) {
                     std::cerr << "Erreur: Impossible de créer une primitive Sphere" << std::endl;
@@ -169,6 +182,11 @@ void Builder::loadPrimitives()
                     double r255 = r / 255.0;
                     double g255 = g / 255.0;
                     double b255 = b / 255.0;
+                    
+                    if (!primitiveManager) {
+                        std::cerr << "Erreur: Plugin manager not loaded, cannot create Plane primitive" << std::endl;
+                        continue;
+                    }
                     primitives::IPrimitive *plane = primitiveManager->createPrimitive("Plane");
                     if (!plane) {
                         std::cerr << "Erreur: Impossible de créer une primitive Plane" << std::endl;
@@ -257,24 +275,29 @@ void Builder::loadScene()
     std::cout << "P3\n" << cam.getWidth() << " " << cam.getHeight() << "\n255\n";
     std::shared_ptr<primitives::IPrimitive> world = std::make_shared<primitives::PrimitivesList>(loaded_primitives.data(), loaded_primitives.size());
     int process = 0;
+    std::mutex image_mutex;
+    unsigned int num_threads = std::thread::hardware_concurrency();
+    if (num_threads == 0) num_threads = 4;
+
     while (1) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
             window.close();
         }
-        for (int i = cam.getHeight() - 1; i >= 0; --i) {
-            if ((cam.getHeight() - i) * 100 / cam.getHeight() > process) {
-                process = (cam.getHeight() - i) * 100 / cam.getHeight();
-                std::cerr << "\rRendering: " << process << "%" << std::flush;
-            }
+        
+        std::vector<std::thread> threads;
+        std::vector<std::vector<std::string>> pixel_data(cam.getHeight());
+        
+        // Lambda function to render a row
+        auto render_row = [&](int row_idx) {
+            std::vector<std::string> row_colors;
             for (int j = 0; j < cam.getWidth(); ++j) {
                 Math::Vector3D col(0, 0, 0);
                 for (int s = 0; s < ns; ++s) {
                     double u = double(j + drand48()) / double(cam.getWidth());
-                    double v = double(i + drand48()) / double(cam.getHeight());
+                    double v = double(row_idx + drand48()) / double(cam.getHeight());
                     RayTracer::Ray r = cam.ray(u, v);
-                    Math::Vector3D pixel_color = r.at(2.0);
                     col += color(r, world.get(), 0);
                 }
                 col /= double(ns);
@@ -282,14 +305,47 @@ void Builder::loadScene()
                 int ir = static_cast<int>(255.99 * col.x);
                 int ig = static_cast<int>(255.99 * col.y);
                 int ib = static_cast<int>(255.99 * col.z);
-                std::cout << ir << " " << ig << " " << ib << "\n";
-                image.setPixel(j, cam.getHeight() - i, sf::Color(ir, ig, ib));
-                texture.update(image);
-                window.clear();
-                window.draw(sprite);
-                window.display();
+                
+                row_colors.push_back(std::to_string(ir) + " " + std::to_string(ig) + " " + std::to_string(ib) + "\n");
+                
+                {
+                    std::lock_guard<std::mutex> lock(image_mutex);
+                    image.setPixel(j, cam.getHeight() - row_idx - 1, sf::Color(ir, ig, ib));
+                }
+            }
+            pixel_data[row_idx] = row_colors;
+        };
+        
+        // Launch threads for each row
+        for (int i = cam.getHeight() - 1; i >= 0; --i) {
+            threads.push_back(std::thread(render_row, i));
+            
+            // Limit number of concurrent threads
+            if (threads.size() >= num_threads) {
+                threads[threads.size() - num_threads].join();
+                threads.erase(threads.begin());
+            }
+            
+            if ((cam.getHeight() - i) * 100 / cam.getHeight() > process) {
+                process = (cam.getHeight() - i) * 100 / cam.getHeight();
+                std::cerr << "\rRendering: " << process << "% (using " << num_threads << " threads)" << std::flush;
             }
         }
+        
+        // Wait for remaining threads
+        for (auto& t : threads) {
+            if (t.joinable()) t.join();
+        }
+        
+        // Output pixel data
+        for (int i = cam.getHeight() - 1; i >= 0; --i) {
+            for (const auto& color_str : pixel_data[i]) {
+                std::cout << color_str;
+            }
+        }
+        
+        // Update texture and display
+        texture.update(image);
         window.clear();
         window.draw(sprite);
         window.display();

@@ -8,23 +8,41 @@
 
 primitives::PrimitiveManager::PrimitiveManager()
 {
-    auto sphereDL = new tools::DLManager("plugins/sphere.so");
-    if (!sphereDL->getLibrary())
-        throw tools::Error(tools::Error::ErrorType::DL_ERROR_INVALID_LIBRARY);
-    auto createSphere = (primitives::IPrimitive *(*)())sphereDL->getFunction("createSphere");
-    if (!createSphere)
-        throw tools::Error(tools::Error::ErrorType::DL_ERROR_INVALID_FUNCTION);
-    primitivesMap["Sphere"] = createSphere;
-    _dlManagers.push_back(sphereDL);
+    // Try to load sphere plugin, but don't fail if missing
+    try {
+        auto sphereDL = new tools::DLManager("plugins/sphere.so");
+        auto createSphere = (primitives::IPrimitive *(*)())sphereDL->getFunction("createSphere");
+        if (createSphere) {
+            primitivesMap["Sphere"] = createSphere;
+            _dlManagers.push_back(sphereDL);
+        }
+    } catch (const tools::Error &e) {
+        // Sphere plugin not available
+    }
 
-    auto planeDL = new tools::DLManager("plugins/plane.so");
-    if (!planeDL->getLibrary())
-        throw tools::Error(tools::Error::ErrorType::DL_ERROR_INVALID_LIBRARY);
-    auto createPlane = (primitives::IPrimitive *(*)())planeDL->getFunction("createPlane");
-    if (!createPlane)
-        throw tools::Error(tools::Error::ErrorType::DL_ERROR_INVALID_FUNCTION);
-    primitivesMap["Plane"] = createPlane;
-    _dlManagers.push_back(planeDL);
+    // Try to load plane plugin, but don't fail if missing
+    try {
+        auto planeDL = new tools::DLManager("plugins/plane.so");
+        auto createPlane = (primitives::IPrimitive *(*)())planeDL->getFunction("createPlane");
+        if (createPlane) {
+            primitivesMap["Plane"] = createPlane;
+            _dlManagers.push_back(planeDL);
+        }
+    } catch (const tools::Error &e) {
+        // Plane plugin not available
+    }
+
+    // Try to load cube plugin, but don't fail if missing
+    try {
+        auto cubeDL = new tools::DLManager("plugins/cube.so");
+        auto createCube = (primitives::IPrimitive *(*)())cubeDL->getFunction("createCube");
+        if (createCube) {
+            primitivesMap["Cube"] = createCube;
+            _dlManagers.push_back(cubeDL);
+        }
+    } catch (const tools::Error &e) {
+        // Cube plugin not available
+    }
 }
 
 primitives::PrimitiveManager::~PrimitiveManager()
@@ -45,7 +63,7 @@ primitives::IPrimitive *primitives::PrimitiveManager::createPrimitive(const std:
     auto it = primitivesMap.find(name);
     if (it != primitivesMap.end())
         return it->second();
-    throw std::runtime_error("Primitive not found");
+    throw std::runtime_error("Primitive type '" + name + "' not available - check if the corresponding plugin is installed");
     return nullptr;
 }
 
