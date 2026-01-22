@@ -16,14 +16,8 @@ namespace RayTracer {
             
             bool scatter(const Ray& r_in, const primitives::HitRecord& rec, 
                 Math::Vector3D& attenuation, Ray& scattered) const override {
-                Math::Vector3D scatter_direction = rec.normal + random_in_unit_sphere();
-                if (scatter_direction.dot(scatter_direction) < 0.001) {
-                    scatter_direction = rec.normal;
-                }
-                    
-                scattered = Ray(rec.point, scatter_direction);
                 attenuation = albedo;
-                return true;
+                return false;
             }
             
             Math::Vector3D albedo;

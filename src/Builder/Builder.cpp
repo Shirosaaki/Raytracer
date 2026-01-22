@@ -360,11 +360,14 @@ Math::Vector3D color(const RayTracer::Ray &r, primitives::IPrimitive *world, int
     primitives::HitRecord rec;
     if (world->hit(r, 0.001, MAXFLOAT, rec)) {
         RayTracer::Ray scattered;
-        Math::Vector3D attenuation;
-        if (depth < 50 && rec.material->scatter(r, rec, attenuation, scattered)) {
+        Math::Vector3D attenuation(0, 0, 0);
+        if (depth < 50 && rec.material && rec.material->scatter(r, rec, attenuation, scattered)) {
             return attenuation * color(scattered, world, depth + 1);
         }
-        return Math::Vector3D(0, 0, 0);
+        if (rec.material) {
+            return attenuation;
+        }
+        return Math::Vector3D(1.0, 0.0, 0.0);
     }    
     Math::Vector3D unit_direction = r.getDirection();
     double t = 0.5 * (unit_direction.y + 1.0);
@@ -384,6 +387,7 @@ void Builder::loadScene()
     sprite.setTexture(texture);
     srand48(time(NULL));
 
+    std::cerr << "DEBUG: Loaded " << loaded_primitives.size() << " primitives\n";
     std::cout << "P3\n" << cam.getWidth() << " " << cam.getHeight() << "\n255\n";
     std::shared_ptr<primitives::IPrimitive> world = std::make_shared<primitives::PrimitivesList>(loaded_primitives.data(), loaded_primitives.size());
     int process = 0;
