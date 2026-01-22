@@ -75,6 +75,34 @@ void Builder::loadPrimitives()
                 obj = "sphere";
             else if (static_cast<std::string>(primitiveList.getName()) == "planes")
                 obj = "plane";
+            else if (static_cast<std::string>(primitiveList.getName()) == "cubes")
+                obj = "cube";
+            else if (static_cast<std::string>(primitiveList.getName()) == "pyramids")
+                obj = "pyramid";
+            else if (static_cast<std::string>(primitiveList.getName()) == "cones")
+                obj = "cone";
+            else if (static_cast<std::string>(primitiveList.getName()) == "cylinders")
+                obj = "cylinder";
+            else if (static_cast<std::string>(primitiveList.getName()) == "icosahedrons")
+                obj = "icosahedron";
+            else if (static_cast<std::string>(primitiveList.getName()) == "ellipsoids")
+                obj = "ellipsoid";
+            else if (static_cast<std::string>(primitiveList.getName()) == "hemispheres")
+                obj = "hemisphere";
+            else if (static_cast<std::string>(primitiveList.getName()) == "dodecahedrons")
+                obj = "dodecahedron";
+            else if (static_cast<std::string>(primitiveList.getName()) == "triangularprisms")
+                obj = "triangularprism";
+            else if (static_cast<std::string>(primitiveList.getName()) == "toruses")
+                obj = "torus";
+            else if (static_cast<std::string>(primitiveList.getName()) == "tetrahedrons")
+                obj = "tetrahedron";
+            else if (static_cast<std::string>(primitiveList.getName()) == "octahedrons")
+                obj = "octahedron";
+            else if (static_cast<std::string>(primitiveList.getName()) == "pentagrammicprisms")
+                obj = "pentagrammicprism";
+            else if (static_cast<std::string>(primitiveList.getName()) == "hexagonalpyramids")
+                obj = "hexagonalpyramid";
             else
                 continue;
                 
@@ -209,6 +237,90 @@ void Builder::loadPrimitives()
                     std::cerr << "Setting not found: " << e.what() << std::endl;
                     continue;
                 }
+            } else if (obj == "cube" || obj == "pyramid" || obj == "cone" || obj == "cylinder" || 
+                       obj == "icosahedron" || obj == "ellipsoid" || obj == "hemisphere" || 
+                       obj == "dodecahedron" || obj == "triangularprism" || obj == "torus" || 
+                       obj == "tetrahedron" || obj == "octahedron" || obj == "pentagrammicprism" || 
+                       obj == "hexagonalpyramid") {
+                
+                Math::Vector3D position;
+                Math::Vector3D scale;
+                std::tuple<int, int, int> color;
+                std::string mat;
+
+                int x = 0, y = 0, z = 0;
+                double sx = 1, sy = 1, sz = 1;
+                
+                try {
+                    if (!primitive.lookupValue("x", x) || !primitive.lookupValue("y", y) || !primitive.lookupValue("z", z)) {
+                        std::cerr << "Failed to read position values" << std::endl;
+                        continue;
+                    }
+                    
+                    // Optional scale params (default to 1 or use specific ones depending on primitive)
+                    // For torus, sx = major radius, sy = minor radius
+                    // For spheres/polyhedrons, sx usually acts as radius
+                    primitive.lookupValue("sx", sx);
+                    primitive.lookupValue("sy", sy);
+                    primitive.lookupValue("sz", sz);
+                    
+                } catch (const libconfig::SettingTypeException &e) {
+                    std::cerr << "Type error reading " << obj << " values: " << e.what() << std::endl;
+                    continue;
+                } catch (const libconfig::SettingNotFoundException &e) {
+                    std::cerr << "Setting not found: " << e.what() << std::endl;
+                    continue;
+                }
+                
+                position = Math::Vector3D(x, y, z);
+                scale = Math::Vector3D(sx, sy, sz);
+
+                const libconfig::Setting &colorSetting = primitive.lookup("color");
+                int r, g, b;
+                colorSetting.lookupValue("r", r);
+                colorSetting.lookupValue("g", g);
+                colorSetting.lookupValue("b", b);
+                double r255 = r / 255.0;
+                double g255 = g / 255.0;
+                double b255 = b / 255.0;
+                
+                std::string className;
+                if (obj == "cube") className = "Cube";
+                else if (obj == "pyramid") className = "Pyramid";
+                else if (obj == "cone") className = "Cone";
+                else if (obj == "cylinder") className = "Cylinder";
+                else if (obj == "icosahedron") className = "Icosahedron";
+                else if (obj == "ellipsoid") className = "Ellipsoid";
+                else if (obj == "hemisphere") className = "Hemisphere";
+                else if (obj == "dodecahedron") className = "Dodecahedron";
+                else if (obj == "triangularprism") className = "TriangularPrism";
+                else if (obj == "torus") className = "Torus";
+                else if (obj == "tetrahedron") className = "Tetrahedron";
+                else if (obj == "octahedron") className = "Octahedron";
+                else if (obj == "pentagrammicprism") className = "PentagrammicPrism";
+                else if (obj == "hexagonalpyramid") className = "HexagonalPyramid";
+
+                if (!primitiveManager) {
+                    std::cerr << "Erreur: Plugin manager not loaded, cannot create " << className << " primitive" << std::endl;
+                    continue;
+                }
+                
+                primitives::IPrimitive *item = primitiveManager->createPrimitive(className);
+                if (!item) {
+                    std::cerr << "Erreur: Impossible de créer une primitive " << className << std::endl;
+                    continue;
+                }
+                
+                primitive.lookupValue("mat", mat);
+                if (mat == "F") {
+                    item->Init(position, scale, new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
+                } else if (mat == "M") {
+                    item->Init(position, scale, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 0.1));
+                } else {
+                    std::cerr << "Invalid material type" << std::endl;
+                    continue;
+                }
+                loaded_primitives.push_back(item);
             } else {
                 std::cerr << "Unknown primitive type: " << obj << std::endl;
                 continue;
