@@ -11,6 +11,10 @@
 #include "../tools/Error.hpp"
 #include "../Materials/Flat.hpp"
 #include "../Materials/Metal.hpp"
+#include "../Materials/Dielectric.hpp"
+#include "../Materials/Plastic.hpp"
+#include "../Materials/Emissive.hpp"
+#include "../Materials/Chalk.hpp"
 #include "../Primitives/PrimitiveList.hpp"
 #include <iomanip>
 #include <cmath>
@@ -161,10 +165,34 @@ void Builder::loadPrimitives()
                 primitive.lookupValue("mat", mat);
                 if (mat == "F") {
                     sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
-                } else if (mat == "M") {
+                } else if (mat == "M") { // Metal
                     double ref = 0.1;
                     primitive.lookupValue("ref", ref);
                     sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Metal(Math::Vector3D(r255, g255, b255), ref));
+                } else if (mat == "R") { // Perfect mirror (metal with fuzz 0)
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 0.0));
+                } else if (mat == "D" || mat == "G") { // Dielectric / glass
+                    double ior = 1.5;
+                    primitive.lookupValue("ior", ior);
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Dielectric(Math::Vector3D(r255, g255, b255), ior));
+                } else if (mat == "W") { // Water preset
+                    double ior = 1.33;
+                    primitive.lookupValue("ior", ior); // allow override
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Dielectric(Math::Vector3D(r255, g255, b255), ior));
+                } else if (mat == "T") { // True transparent (no tint, near-air IOR)
+                    double ior = 1.02;
+                    primitive.lookupValue("ior", ior);
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Dielectric(Math::Vector3D(1.0, 1.0, 1.0), ior));
+                } else if (mat == "P") { // Plastic
+                    double gloss = 0.1;
+                    primitive.lookupValue("gloss", gloss);
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Plastic(Math::Vector3D(r255, g255, b255), gloss));
+                } else if (mat == "E") { // Emissive / light
+                    double emit = 1.0;
+                    primitive.lookupValue("emit", emit);
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Emissive(Math::Vector3D(r255, g255, b255), emit));
+                } else if (mat == "C") { // Chalk (matte)
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Chalk(Math::Vector3D(r255, g255, b255)));
                 } else {
                     std::cerr << "Invalid material type" << std::endl;
                     continue;
@@ -235,10 +263,34 @@ void Builder::loadPrimitives()
                     primitive.lookupValue("mat", mat);
                     if (mat == "F") {
                         plane->Init(position, axis, new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
-                    } else if (mat == "M") {
+                    } else if (mat == "M") { // Metal
                         double ref = 0.1;
                         primitive.lookupValue("ref", ref);
                         plane->Init(position, axis, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), ref));
+                    } else if (mat == "R") { // Mirror
+                        plane->Init(position, axis, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 0.0));
+                    } else if (mat == "D" || mat == "G") { // Dielectric / glass
+                        double ior = 1.5;
+                        primitive.lookupValue("ior", ior);
+                        plane->Init(position, axis, new RayTracer::Dielectric(Math::Vector3D(r255, g255, b255), ior));
+                    } else if (mat == "W") { // Water preset
+                        double ior = 1.33;
+                        primitive.lookupValue("ior", ior);
+                        plane->Init(position, axis, new RayTracer::Dielectric(Math::Vector3D(r255, g255, b255), ior));
+                    } else if (mat == "T") { // True transparent
+                        double ior = 1.02;
+                        primitive.lookupValue("ior", ior);
+                        plane->Init(position, axis, new RayTracer::Dielectric(Math::Vector3D(1.0, 1.0, 1.0), ior));
+                    } else if (mat == "P") { // Plastic
+                        double gloss = 0.1;
+                        primitive.lookupValue("gloss", gloss);
+                        plane->Init(position, axis, new RayTracer::Plastic(Math::Vector3D(r255, g255, b255), gloss));
+                    } else if (mat == "E") { // Emissive
+                        double emit = 1.0;
+                        primitive.lookupValue("emit", emit);
+                        plane->Init(position, axis, new RayTracer::Emissive(Math::Vector3D(r255, g255, b255), emit));
+                    } else if (mat == "C") { // Chalk (matte)
+                        plane->Init(position, axis, new RayTracer::Chalk(Math::Vector3D(r255, g255, b255)));
                     } else {
                         std::cerr << "Invalid material type" << std::endl;
                         continue;
@@ -338,10 +390,34 @@ void Builder::loadPrimitives()
                 primitive.lookupValue("mat", mat);
                 if (mat == "F") {
                     item->Init(position, scale, new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
-                } else if (mat == "M") {
+                } else if (mat == "M") { // Metal
                     double ref = 0.1;
                     primitive.lookupValue("ref", ref);
                     item->Init(position, scale, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), ref));
+                } else if (mat == "R") { // Mirror
+                    item->Init(position, scale, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 0.0));
+                } else if (mat == "D" || mat == "G") { // Dielectric / glass
+                    double ior = 1.5;
+                    primitive.lookupValue("ior", ior);
+                    item->Init(position, scale, new RayTracer::Dielectric(Math::Vector3D(r255, g255, b255), ior));
+                } else if (mat == "W") { // Water preset
+                    double ior = 1.33;
+                    primitive.lookupValue("ior", ior);
+                    item->Init(position, scale, new RayTracer::Dielectric(Math::Vector3D(r255, g255, b255), ior));
+                } else if (mat == "T") { // True transparent
+                    double ior = 1.02;
+                    primitive.lookupValue("ior", ior);
+                    item->Init(position, scale, new RayTracer::Dielectric(Math::Vector3D(1.0, 1.0, 1.0), ior));
+                } else if (mat == "P") { // Plastic
+                    double gloss = 0.1;
+                    primitive.lookupValue("gloss", gloss);
+                    item->Init(position, scale, new RayTracer::Plastic(Math::Vector3D(r255, g255, b255), gloss));
+                } else if (mat == "E") { // Emissive
+                    double emit = 1.0;
+                    primitive.lookupValue("emit", emit);
+                    item->Init(position, scale, new RayTracer::Emissive(Math::Vector3D(r255, g255, b255), emit));
+                } else if (mat == "C") { // Chalk (matte)
+                    item->Init(position, scale, new RayTracer::Chalk(Math::Vector3D(r255, g255, b255)));
                 } else {
                     std::cerr << "Invalid material type" << std::endl;
                     continue;

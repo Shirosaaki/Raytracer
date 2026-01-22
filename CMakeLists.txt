@@ -30,6 +30,10 @@ set_target_properties(primitives PROPERTIES
 add_library(sphere SHARED
     src/Materials/Flat.hpp
     src/Materials/Metal.hpp
+    src/Materials/Dielectric.hpp
+    src/Materials/Plastic.hpp
+    src/Materials/Emissive.hpp
+    src/Materials/Chalk.hpp
     src/Primitives/Vector3D.hpp
     src/Primitives/Vector3D.cpp
     src/Materials/IMaterials.hpp
@@ -348,6 +352,7 @@ add_executable(raytracer
     src/tools/dlManager.cpp
     src/tools/dlManager.hpp
     src/Materials/Metal.hpp
+    src/Materials/Dielectric.hpp
     src/Primitives/Vector3D.hpp
     src/Primitives/Vector3D.cpp
     src/Materials/IMaterials.hpp
