@@ -58,9 +58,16 @@ static int solveQuartic(double c[5], double s[4])
 
 bool primitives::Torus::hit(const RayTracer::Ray& r, double t_min, double t_max, HitRecord &rec) const
 {
-    // Torus centered at position, lying in XZ plane (donut shape)
-    Math::Vector3D oc = r.getOrigin() - position;
-    Math::Vector3D dir = r.getDirection();
+    // Transform ray to object space
+    Math::Vector3D ray_origin = r.getOrigin() - position;
+    Math::Vector3D ray_direction = r.getDirection();
+    
+    // Apply inverse rotation if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        ray_origin = ray_origin.rotate(inv_rotation);
+        ray_direction = ray_direction.rotate(inv_rotation);
+    }
     
     double R = majorRadius; // Distance from center to tube center
     double r_tube = minorRadius; // Tube radius
@@ -69,10 +76,9 @@ bool primitives::Torus::hit(const RayTracer::Ray& r, double t_min, double t_max,
     // Using iterative ray marching for simpler implementation
     double t = t_min;
     double step = 0.05;
-    double prev_dist = 1e10;
     
     while (t < t_max) {
-        Math::Vector3D p = r.at(t) - position;
+        Math::Vector3D p = ray_origin + ray_direction * t;
         
         // Distance to torus surface
         double q = std::sqrt(p.x * p.x + p.z * p.z) - R;
@@ -82,14 +88,22 @@ bool primitives::Torus::hit(const RayTracer::Ray& r, double t_min, double t_max,
             rec.t = t;
             rec.point = r.at(t);
             
-            // Calculate normal
+            // Calculate normal in object space
             double len_xz = std::sqrt(p.x * p.x + p.z * p.z);
+            Math::Vector3D normal_local;
             if (len_xz > 1e-6) {
                 Math::Vector3D center_on_ring = Math::Vector3D(p.x / len_xz * R, 0, p.z / len_xz * R);
-                rec.normal = (p - center_on_ring).normalized();
+                normal_local = (p - center_on_ring).normalized();
             } else {
-                rec.normal = Math::Vector3D(0, 1, 0);
+                normal_local = Math::Vector3D(0, 1, 0);
             }
+            
+            // Transform normal back to world space
+            if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+                normal_local = normal_local.rotate(rotation);
+            }
+            
+            rec.normal = normal_local.normalized();
             rec.setFaceNormal(r, rec.normal);
             rec.material = material;
             return true;
@@ -98,7 +112,6 @@ bool primitives::Torus::hit(const RayTracer::Ray& r, double t_min, double t_max,
         // Adaptive step size
         step = std::max(0.01, dist * 0.5);
         t += step;
-        prev_dist = dist;
     }
     
     return false;

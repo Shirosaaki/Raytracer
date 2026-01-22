@@ -18,10 +18,12 @@ namespace primitives {
             ~Tetrahedron();
             bool hit(const RayTracer::Ray& r, double t_min, double t_max, HitRecord &rec) const override;
             void Init(Math::Vector3D centre, Math::Vector3D scale, RayTracer::IMaterials *material) override;
+            void SetRotation(Math::Vector3D rot) override { rotation = rot; }
 
         private:
             Math::Vector3D position;
-            double radius;
+            double scaleX, scaleY, scaleZ;
+            Math::Vector3D rotation = {0, 0, 0};
             RayTracer::IMaterials *material;
     };
 }

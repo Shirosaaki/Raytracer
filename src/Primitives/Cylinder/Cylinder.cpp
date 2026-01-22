@@ -18,12 +18,23 @@ primitives::Cylinder::~Cylinder()
 
 bool primitives::Cylinder::hit(const RayTracer::Ray& r, double t_min, double t_max, HitRecord &rec) const
 {
+    // Transform ray to object space
+    Math::Vector3D ray_origin = r.getOrigin() - position;
+    Math::Vector3D ray_direction = r.getDirection();
+    
+    // Apply inverse rotation if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        ray_origin = ray_origin.rotate(inv_rotation);
+        ray_direction = ray_direction.rotate(inv_rotation);
+    }
+    
     // Finite cylinder along Y axis
     double radius = scale.x;
     double half_height = scale.z / 2.0;
     
-    Math::Vector3D oc = r.getOrigin() - position;
-    Math::Vector3D dir = r.getDirection();
+    Math::Vector3D oc = ray_origin;
+    Math::Vector3D dir = ray_direction;
     
     // Cylinder side: x² + z² = radius²
     double a = dir.x * dir.x + dir.z * dir.z;
@@ -41,22 +52,24 @@ bool primitives::Cylinder::hit(const RayTracer::Ray& r, double t_min, double t_m
         
         double t1 = (-b - sqrt_d) / (2.0 * a);
         if (t1 > t_min && t1 < closest_t) {
-            Math::Vector3D p = r.at(t1);
-            double y_local = p.y - position.y;
-            if (y_local >= -half_height && y_local <= half_height) {
+            double py = oc.y + t1 * dir.y;
+            if (py >= -half_height && py <= half_height) {
+                double px = oc.x + t1 * dir.x;
+                double pz = oc.z + t1 * dir.z;
                 closest_t = t1;
-                closest_normal = Math::Vector3D(p.x - position.x, 0, p.z - position.z).normalized();
+                closest_normal = Math::Vector3D(px, 0, pz).normalized();
                 hit_something = true;
             }
         }
         
         double t2 = (-b + sqrt_d) / (2.0 * a);
         if (t2 > t_min && t2 < closest_t) {
-            Math::Vector3D p = r.at(t2);
-            double y_local = p.y - position.y;
-            if (y_local >= -half_height && y_local <= half_height) {
+            double py = oc.y + t2 * dir.y;
+            if (py >= -half_height && py <= half_height) {
+                double px = oc.x + t2 * dir.x;
+                double pz = oc.z + t2 * dir.z;
                 closest_t = t2;
-                closest_normal = Math::Vector3D(p.x - position.x, 0, p.z - position.z).normalized();
+                closest_normal = Math::Vector3D(px, 0, pz).normalized();
                 hit_something = true;
             }
         }
@@ -64,10 +77,11 @@ bool primitives::Cylinder::hit(const RayTracer::Ray& r, double t_min, double t_m
     
     // Check top cap
     if (std::abs(dir.y) > 1e-6) {
-        double t_top = (position.y + half_height - r.getOrigin().y) / dir.y;
+        double t_top = (half_height - oc.y) / dir.y;
         if (t_top > t_min && t_top < closest_t) {
-            Math::Vector3D p = r.at(t_top);
-            double dist = (p.x - position.x) * (p.x - position.x) + (p.z - position.z) * (p.z - position.z);
+            double px = oc.x + t_top * dir.x;
+            double pz = oc.z + t_top * dir.z;
+            double dist = px * px + pz * pz;
             if (dist <= radius * radius) {
                 closest_t = t_top;
                 closest_normal = Math::Vector3D(0, 1, 0);
@@ -76,10 +90,11 @@ bool primitives::Cylinder::hit(const RayTracer::Ray& r, double t_min, double t_m
         }
         
         // Check bottom cap
-        double t_bot = (position.y - half_height - r.getOrigin().y) / dir.y;
+        double t_bot = (-half_height - oc.y) / dir.y;
         if (t_bot > t_min && t_bot < closest_t) {
-            Math::Vector3D p = r.at(t_bot);
-            double dist = (p.x - position.x) * (p.x - position.x) + (p.z - position.z) * (p.z - position.z);
+            double px = oc.x + t_bot * dir.x;
+            double pz = oc.z + t_bot * dir.z;
+            double dist = px * px + pz * pz;
             if (dist <= radius * radius) {
                 closest_t = t_bot;
                 closest_normal = Math::Vector3D(0, -1, 0);
@@ -91,7 +106,13 @@ bool primitives::Cylinder::hit(const RayTracer::Ray& r, double t_min, double t_m
     if (hit_something) {
         rec.t = closest_t;
         rec.point = r.at(closest_t);
-        rec.normal = closest_normal;
+        
+        // Transform normal back to world space
+        if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+            closest_normal = closest_normal.rotate(rotation);
+        }
+        
+        rec.normal = closest_normal.normalized();
         rec.setFaceNormal(r, rec.normal);
         rec.material = material;
         return true;

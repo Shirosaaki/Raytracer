@@ -62,6 +62,12 @@ public:
     // Réflexion
     static Vector3D reflect(const Vector3D& incident, const Vector3D& normal);
     
+    // Rotation (angles in degrees)
+    Vector3D rotateX(double angle) const;
+    Vector3D rotateY(double angle) const;
+    Vector3D rotateZ(double angle) const;
+    Vector3D rotate(const Vector3D& angles) const;
+    
     // Variables membres
     double x, y, z;
 };

@@ -27,6 +27,13 @@ bool primitives::TriangularPrism::hit(const RayTracer::Ray& r, double t_min, dou
     Math::Vector3D r_orig = r.getOrigin() - position;
     Math::Vector3D r_dir = r.getDirection();
     
+    // Apply inverse rotation to ray if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        r_orig = r_orig.rotate(inv_rotation);
+        r_dir = r_dir.rotate(inv_rotation);
+    }
+    
     // Check Y slab
     double y_min = -height / 2.0;
     double y_max = height / 2.0;
@@ -63,6 +70,12 @@ bool primitives::TriangularPrism::hit(const RayTracer::Ray& r, double t_min, dou
     rec.point = hit_point;
     rec.normal = Math::Vector3D(hit_point.x - position.x, 0, hit_point.z - position.z);
     rec.normal.normalize();
+    
+    // Transform normal back to world space
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        rec.normal = rec.normal.rotate(rotation);
+    }
+    
     rec.setFaceNormal(r, rec.normal);
     rec.material = material;
     return true;

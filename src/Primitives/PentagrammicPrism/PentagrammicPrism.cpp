@@ -35,6 +35,14 @@ bool primitives::PentagrammicPrism::hit(const RayTracer::Ray& r, double t_min, d
 {
     // Check Y-slab intersection first
     Math::Vector3D r_orig = r.getOrigin() - position;
+    Math::Vector3D r_d = r.getDirection();
+    
+    // Apply inverse rotation to ray if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        r_orig = r_orig.rotate(inv_rotation);
+        r_d = r_d.rotate(inv_rotation);
+    }
     double height = scale.y;
     double t_enter = t_min;
     double t_exit = t_max;
@@ -52,8 +60,8 @@ bool primitives::PentagrammicPrism::hit(const RayTracer::Ray& r, double t_min, d
     // Check slabs (Y)
     double y_min = -height/2; 
     double y_max = height/2;
-    double t_y1 = (y_min - r_orig.y) / r.getDirection().y;
-    double t_y2 = (y_max - r_orig.y) / r.getDirection().y;
+    double t_y1 = (y_min - r_orig.y) / r_d.y;
+    double t_y2 = (y_max - r_orig.y) / r_d.y;
     if (t_y1 > t_y2) std::swap(t_y1, t_y2);
     
     double t_near = std::max(t_min, t_y1);
@@ -61,8 +69,8 @@ bool primitives::PentagrammicPrism::hit(const RayTracer::Ray& r, double t_min, d
     if (t_near > t_far) return false;
     
     // Bounding Cylinder optimization
-    double a = r.getDirection().x * r.getDirection().x + r.getDirection().z * r.getDirection().z;
-    double b = 2 * (r_orig.x * r.getDirection().x + r_orig.z * r.getDirection().z);
+    double a = r_d.x * r_d.x + r_d.z * r_d.z;
+    double b = 2 * (r_orig.x * r_d.x + r_orig.z * r_d.z);
     double c = r_orig.x * r_orig.x + r_orig.z * r_orig.z - radius * radius;
     double disc = b*b - 4*a*c;
     if (disc < 0) return false;
@@ -72,12 +80,12 @@ bool primitives::PentagrammicPrism::hit(const RayTracer::Ray& r, double t_min, d
     Math::Vector3D norm;
     
     // Check caps
-    if (std::abs(r.getDirection().y) > 1e-6) {
+    if (std::abs(r_d.y) > 1e-6) {
         for (int k = 0; k < 2; k++) {
             double y = (k==0) ? y_min : y_max;
-            double t = (y - r_orig.y) / r.getDirection().y;
+            double t = (y - r_orig.y) / r_d.y;
             if (t > t_min && t < best_t) {
-                Math::Vector3D p = r_orig + r.getDirection() * t;
+                Math::Vector3D p = r_orig + r_d * t;
                 if (pointInPolygon(p, vertices)) {
                     best_t = t;
                     found = true;
@@ -99,11 +107,11 @@ bool primitives::PentagrammicPrism::hit(const RayTracer::Ray& r, double t_min, d
         
         double d = wall_normal.x * p1.first + wall_normal.z * p1.second;
         
-        double denom = r.getDirection().dot(wall_normal);
+        double denom = r_d.dot(wall_normal);
         if (std::abs(denom) > 1e-6) {
             double t = (d - r_orig.dot(wall_normal)) / denom;
             if (t > t_min && t < best_t) {
-                Math::Vector3D hitp = r_orig + r.getDirection() * t;
+                Math::Vector3D hitp = r_orig + r_d * t;
                 if (hitp.y >= y_min && hitp.y <= y_max) {
                     double l2 = dx*dx + dz*dz;
                     if (l2 > 1e-9) {
@@ -122,6 +130,12 @@ bool primitives::PentagrammicPrism::hit(const RayTracer::Ray& r, double t_min, d
     if (found) {
         rec.t = best_t;
         rec.point = r.at(best_t);
+        
+        // Transform normal back to world space
+        if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+            norm = norm.rotate(rotation);
+        }
+        
         rec.normal = norm;
         rec.setFaceNormal(r, rec.normal);
         rec.material = material;

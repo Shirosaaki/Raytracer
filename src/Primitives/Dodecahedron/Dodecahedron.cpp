@@ -10,7 +10,7 @@
 #include <algorithm>
 
 primitives::Dodecahedron::Dodecahedron() 
-    : position(0, 0, 0), radius(1), material(nullptr)
+    : position(0, 0, 0), scale(1, 1, 1), material(nullptr)
 {
 }
 
@@ -22,7 +22,17 @@ bool primitives::Dodecahedron::hit(const RayTracer::Ray& r, double t_min, double
 {
     Math::Vector3D r_orig = r.getOrigin() - position;
     Math::Vector3D r_d = r.getDirection();
-    double s = radius; // Scale factor
+    
+    // Apply inverse rotation to ray if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        r_orig = r_orig.rotate(inv_rotation);
+        r_d = r_d.rotate(inv_rotation);
+    }
+    
+    double sx = scale.x;
+    double sy = scale.y;
+    double sz = scale.z;
     
     double phi = (1.0 + std::sqrt(5.0)) / 2.0; // 1.618
     double inv_phi = 1.0 / phi; // 0.618
@@ -60,6 +70,18 @@ bool primitives::Dodecahedron::hit(const RayTracer::Ray& r, double t_min, double
     // (+-phi, +-1/phi, 0)
     for (int i=0; i<4; i++) vertices.push_back({(i&1 ? -phi:phi), (i&2 ? -inv_phi:inv_phi), 0});
 
+    // Apply non-uniform scaling to ray (scale to unit dodecahedron space)
+    Math::Vector3D r_orig_s = Math::Vector3D(
+        r_orig.x / (sx != 0 ? sx : 1.0),
+        r_orig.y / (sy != 0 ? sy : 1.0),
+        r_orig.z / (sz != 0 ? sz : 1.0)
+    );
+    Math::Vector3D r_d_s = Math::Vector3D(
+        r_d.x / (sx != 0 ? sx : 1.0),
+        r_d.y / (sy != 0 ? sy : 1.0),
+        r_d.z / (sz != 0 ? sz : 1.0)
+    );
+
     double t0 = t_min, t1 = t_max;
     Math::Vector3D n0, n1;
     bool hit = true;
@@ -77,15 +99,10 @@ bool primitives::Dodecahedron::hit(const RayTracer::Ray& r, double t_min, double
         // Effective Plane: dot(N, P) - d*s = 0.
         // Wait, if P is scaled by s, P_local = P/s.
         // dot(N, P/s) <= d => dot(N, P) <= d*s.
-        double plane_d = -d * s; // Eq: dot(N, P) + plane_d <= 0 for inside?
-        // Wait, standard: dot(N, P) = dist. Max dist is d*s.
-        // So plane is at distance d*s along N.
-        // Plane eq: N.P - d*s = 0 (pointing out?).
-        // If N points out, then for inside point, dot(N, P) < d*s.
-        // So numer = d*s - dot(N, O).
-        
-        double numer = (d * s) - n.dot(r_orig);
-        double denom = n.dot(r_d);
+        // In scaled space (unit shape), plane is at distance d along normal
+        // Ray is already scaled: use r_orig_s, r_d_s
+        double numer = d - n.dot(r_orig_s);
+        double denom = n.dot(r_d_s);
         
         if (std::abs(denom) < 1e-9) { 
              // Ray parallel. If numer < 0, origin is outside (dist > d*s).
@@ -105,7 +122,18 @@ bool primitives::Dodecahedron::hit(const RayTracer::Ray& r, double t_min, double
     if (hit && t0 < t_max && t0 > t_min) {
         rec.t = t0;
         rec.point = r.at(t0);
-        rec.normal = n0;
+        
+        // Transform normal back to world space accounting for non-uniform scale
+        Math::Vector3D normal_scaled = Math::Vector3D(
+            n0.x / (sx != 0 ? sx : 1.0),
+            n0.y / (sy != 0 ? sy : 1.0),
+            n0.z / (sz != 0 ? sz : 1.0)
+        ).normalized();
+        if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+            normal_scaled = normal_scaled.rotate(rotation);
+        }
+        
+        rec.normal = normal_scaled;
         rec.setFaceNormal(r, rec.normal);
         rec.material = material;
         return true;
@@ -117,7 +145,7 @@ bool primitives::Dodecahedron::hit(const RayTracer::Ray& r, double t_min, double
 void primitives::Dodecahedron::Init(Math::Vector3D centre, Math::Vector3D scale, RayTracer::IMaterials *material)
 {
     this->position = centre;
-    this->radius = scale.x;
+    this->scale = scale;
     this->material = material;
 }
 

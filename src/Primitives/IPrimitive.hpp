@@ -36,6 +36,7 @@ namespace primitives {
             ~IPrimitive() = default;
             IPrimitive() = default;
             virtual void Init(Math::Vector3D centre, Math::Vector3D radius, RayTracer::IMaterials *matherial) = 0;
+            virtual void SetRotation(Math::Vector3D rotation) {}
             virtual bool hit(const RayTracer::Ray& r, double t_min, double t_max, primitives::HitRecord& rec) const = 0;
     };
 }

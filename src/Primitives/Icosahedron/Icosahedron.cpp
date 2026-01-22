@@ -10,7 +10,7 @@
 #include <algorithm>
 
 primitives::Icosahedron::Icosahedron() 
-    : position(0, 0, 0), radius(1), material(nullptr)
+    : position(0, 0, 0), scale(1, 1, 1), material(nullptr)
 {
 }
 
@@ -22,7 +22,18 @@ bool primitives::Icosahedron::hit(const RayTracer::Ray& r, double t_min, double 
 {
     Math::Vector3D r_orig = r.getOrigin() - position;
     Math::Vector3D r_d = r.getDirection();
-    double s = radius; // Scale factor
+    
+    // Apply inverse rotation to ray if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        r_orig = r_orig.rotate(inv_rotation);
+        r_d = r_d.rotate(inv_rotation);
+    }
+    
+    // Non-uniform scaling factors
+    double sx = scale.x;
+    double sy = scale.y;
+    double sz = scale.z;
     
     // Golden ratio
     double phi = (1.0 + std::sqrt(5.0)) / 2.0;
@@ -51,10 +62,10 @@ bool primitives::Icosahedron::hit(const RayTracer::Ray& r, double t_min, double 
         Math::Vector3D v2 = verts[faces[i][1]];
         Math::Vector3D v3 = verts[faces[i][2]];
         
-        // Scale vertices
-        v1 = v1 * s;
-        v2 = v2 * s;
-        v3 = v3 * s;
+        // Scale vertices with non-uniform scaling on each axis
+        v1 = Math::Vector3D(v1.x * sx, v1.y * sy, v1.z * sz);
+        v2 = Math::Vector3D(v2.x * sx, v2.y * sy, v2.z * sz);
+        v3 = Math::Vector3D(v3.x * sx, v3.y * sy, v3.z * sz);
         
         Math::Vector3D normal = (v2 - v1).cross(v3 - v1);
         normal.normalize();
@@ -83,6 +94,12 @@ bool primitives::Icosahedron::hit(const RayTracer::Ray& r, double t_min, double 
     if (hit && t0 < t_max && t0 > t_min) {
         rec.t = t0;
         rec.point = r.at(t0);
+        
+        // Transform normal back to world space
+        if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+            n0 = n0.rotate(rotation);
+        }
+        
         rec.normal = n0;
         rec.setFaceNormal(r, rec.normal);
         rec.material = material;
@@ -95,7 +112,7 @@ bool primitives::Icosahedron::hit(const RayTracer::Ray& r, double t_min, double 
 void primitives::Icosahedron::Init(Math::Vector3D centre, Math::Vector3D scale, RayTracer::IMaterials *material)
 {
     this->position = centre;
-    this->radius = scale.x;
+    this->scale = scale;
     this->material = material;
 }
 

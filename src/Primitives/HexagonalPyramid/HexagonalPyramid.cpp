@@ -28,6 +28,13 @@ bool primitives::HexagonalPyramid::hit(const RayTracer::Ray& r, double t_min, do
     
     Math::Vector3D r_orig = r.getOrigin() - position;
     Math::Vector3D r_d = r.getDirection();
+    
+    // Apply inverse rotation to ray if needed
+    if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+        Math::Vector3D inv_rotation = Math::Vector3D(-rotation.x, -rotation.y, -rotation.z);
+        r_orig = r_orig.rotate(inv_rotation);
+        r_d = r_d.rotate(inv_rotation);
+    }
     double h = scale.y;
     double radius = scale.x; // radius of hexagonal base
     
@@ -129,6 +136,12 @@ bool primitives::HexagonalPyramid::hit(const RayTracer::Ray& r, double t_min, do
     if (hit && t0 < t_max && t0 > t_min) {
         rec.t = t0;
         rec.point = r.at(t0);
+        
+        // Transform normal back to world space
+        if (rotation.x != 0 || rotation.y != 0 || rotation.z != 0) {
+            n0 = n0.rotate(rotation);
+        }
+        
         rec.normal = n0;
         rec.setFaceNormal(r, rec.normal);
         rec.material = material;

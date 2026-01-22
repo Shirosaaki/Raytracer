@@ -15,6 +15,7 @@ namespace primitives {
             Plane();
             ~Plane();
             void Init(Math::Vector3D centre, Math::Vector3D radius, RayTracer::IMaterials *matherial) override;
+            void SetRotation(Math::Vector3D rot) override { rotation = rot; }
             bool hit(const RayTracer::Ray& r, double t_min, double t_max, HitRecord &rec) const override;
         
         private:

@@ -162,10 +162,22 @@ void Builder::loadPrimitives()
                 if (mat == "F") {
                     sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
                 } else if (mat == "M") {
-                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 0.1));
+                    double ref = 0.1;
+                    primitive.lookupValue("ref", ref);
+                    sphere->Init(position, Math::Vector3D(radius, radius, radius), new RayTracer::Metal(Math::Vector3D(r255, g255, b255), ref));
                 } else {
                     std::cerr << "Invalid material type" << std::endl;
                     continue;
+                }
+                try {
+                    const libconfig::Setting &rotationSetting = primitive.lookup("rotation");
+                    int rx = 0, ry = 0, rz = 0;
+                    rotationSetting.lookupValue("x", rx);
+                    rotationSetting.lookupValue("y", ry);
+                    rotationSetting.lookupValue("z", rz);
+                    sphere->SetRotation(Math::Vector3D(rx, ry, rz));
+                } catch (...) {
+                    // Rotation is optional
                 }
                 loaded_primitives.push_back(sphere);
             } else if (obj == "plane") {
@@ -224,10 +236,22 @@ void Builder::loadPrimitives()
                     if (mat == "F") {
                         plane->Init(position, axis, new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
                     } else if (mat == "M") {
-                        plane->Init(position, axis, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 1));
+                        double ref = 0.1;
+                        primitive.lookupValue("ref", ref);
+                        plane->Init(position, axis, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), ref));
                     } else {
                         std::cerr << "Invalid material type" << std::endl;
                         continue;
+                    }
+                    try {
+                        const libconfig::Setting &rotationSetting = primitive.lookup("rotation");
+                        int rx = 0, ry = 0, rz = 0;
+                        rotationSetting.lookupValue("x", rx);
+                        rotationSetting.lookupValue("y", ry);
+                        rotationSetting.lookupValue("z", rz);
+                        plane->SetRotation(Math::Vector3D(rx, ry, rz));
+                    } catch (...) {
+                        // Rotation is optional
                     }
                     loaded_primitives.push_back(plane);
                 } catch (const libconfig::SettingTypeException &e) {
@@ -315,10 +339,22 @@ void Builder::loadPrimitives()
                 if (mat == "F") {
                     item->Init(position, scale, new RayTracer::Flat(Math::Vector3D(r255, g255, b255)));
                 } else if (mat == "M") {
-                    item->Init(position, scale, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), 0.1));
+                    double ref = 0.1;
+                    primitive.lookupValue("ref", ref);
+                    item->Init(position, scale, new RayTracer::Metal(Math::Vector3D(r255, g255, b255), ref));
                 } else {
                     std::cerr << "Invalid material type" << std::endl;
                     continue;
+                }
+                try {
+                    const libconfig::Setting &rotationSetting = primitive.lookup("rotation");
+                    int rx = 0, ry = 0, rz = 0;
+                    rotationSetting.lookupValue("x", rx);
+                    rotationSetting.lookupValue("y", ry);
+                    rotationSetting.lookupValue("z", rz);
+                    item->SetRotation(Math::Vector3D(rx, ry, rz));
+                } catch (...) {
+                    // Rotation is optional
                 }
                 loaded_primitives.push_back(item);
             } else {

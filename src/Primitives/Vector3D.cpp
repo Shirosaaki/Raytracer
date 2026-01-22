@@ -166,4 +166,33 @@ std::istream& operator>>(std::istream& is, Vector3D& v)
     return is;
 }
 
+Vector3D Vector3D::rotateX(double angle) const
+{
+    double rad = angle * M_PI / 180.0;
+    double c = std::cos(rad);
+    double s = std::sin(rad);
+    return Vector3D(x, y * c - z * s, y * s + z * c);
+}
+
+Vector3D Vector3D::rotateY(double angle) const
+{
+    double rad = angle * M_PI / 180.0;
+    double c = std::cos(rad);
+    double s = std::sin(rad);
+    return Vector3D(x * c + z * s, y, -x * s + z * c);
+}
+
+Vector3D Vector3D::rotateZ(double angle) const
+{
+    double rad = angle * M_PI / 180.0;
+    double c = std::cos(rad);
+    double s = std::sin(rad);
+    return Vector3D(x * c - y * s, x * s + y * c, z);
+}
+
+Vector3D Vector3D::rotate(const Vector3D& angles) const
+{
+    return rotateX(angles.x).rotateY(angles.y).rotateZ(angles.z);
+}
+
 } // namespace Math
